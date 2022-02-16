@@ -23,3 +23,9 @@ type Journey struct {
 	UserId  int    `db:"user_id"`
 	Status  string `db:"status"`
 }
+
+type JourneyStats struct {
+	Empty    int
+	Filled   int
+	Reserved int
+}

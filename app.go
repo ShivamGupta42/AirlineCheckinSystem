@@ -1,5 +1,0 @@
-package AirlineCheckinSystem
-
-func StartServer() {
-
-}
