@@ -33,16 +33,15 @@ func (j *JourneyRepositoryDb) AddUserJourney(planeId, seatId, userId int) (*Jour
 		return nil, errors.NewUnexpectedError("Unexpected database error")
 	}
 
-	FindByID := "SELECT id, plane_id, seat_id from journey where user_id is null"
+	FindByID := "SELECT id, plane_id, seat_id from journey where user_id is null limit 1"
 
 	var rows *sql.Rows
 	rows, err = tx.Query(FindByID)
 	defer rows.Close()
 
-	var journeys []Journey
+	var journey Journey
 
 	for rows.Next() {
-		var journey Journey
 		if err = rows.Scan(&journey.Id, &journey.PlaneId, &journey.SeatId); err != nil {
 			tx.Rollback()
 			logger.Error("Error while fetching journey : " + err.Error())
@@ -56,25 +55,18 @@ func (j *JourneyRepositoryDb) AddUserJourney(planeId, seatId, userId int) (*Jour
 		return nil, errors.NewUnexpectedError("Unexpected database error")
 	}
 
-	UpdateById := "UPDATE table journey set user_id= ? AND set status = 'RESERVED' where id = ?"
+	UpdateById := "UPDATE journey set user_id = $1, status = 'RESERVED' where id = $2"
 
-	var userJourney Journey
-
-	for _, journey := range journeys {
-		if journey.Status != "FILLED" {
-			_, err = tx.Exec(UpdateById, userId, journey.Id)
-			if err != nil {
-				tx.Rollback()
-				logger.Error("Error while updating journey : " + err.Error())
-				return nil, errors.NewUnexpectedError("Unexpected database error")
-			}
-			userJourney = journey
-			break
-		}
+	_, err = tx.Exec(UpdateById, userId, journey.Id)
+	if err != nil {
+		tx.Rollback()
+		logger.Error("Error while updating journey : " + err.Error())
+		return nil, errors.NewUnexpectedError("Unexpected database error")
 	}
 
+	journey.UserId = userId
 	tx.Commit()
-	return &userJourney, nil
+	return &journey, nil
 
 }
 
@@ -94,10 +86,17 @@ func (j *JourneyRepositoryDb) AllJourneyStats(planeId int) (*JourneyStats, *erro
 	}
 
 	for rows.Next() {
-		var status string
-		if err = rows.Scan(&status); err != nil {
+		var dbStatus sql.NullString
+		if err = rows.Scan(&dbStatus); err != nil {
 			logger.Error("Error while getting journey stats: " + err.Error())
 			return nil, errors.NewUnexpectedError("Unexpected database error")
+		}
+
+		var status string
+		if !dbStatus.Valid {
+			status = "EMPTY"
+		} else {
+			status = dbStatus.String
 		}
 
 		switch status {

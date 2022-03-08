@@ -17,7 +17,7 @@ type DefaultBookingService struct {
 	JourneyRepo *domain.JourneyRepositoryDb
 }
 
-func (d *DefaultBookingService) BookASeat(userId int, planeId int, seatId int, wg sync.WaitGroup) (*domain.Journey, *errors.AppError) {
+func (d *DefaultBookingService) BookASeat(userId int, planeId int, seatId int, wg *sync.WaitGroup) (*domain.Journey, *errors.AppError) {
 	defer wg.Done()
 	journey, err := d.JourneyRepo.AddUserJourney(planeId, seatId, userId)
 	if err != nil {

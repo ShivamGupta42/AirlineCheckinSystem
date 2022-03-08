@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 type Status int
 
 const (
@@ -28,4 +30,8 @@ type JourneyStats struct {
 	Empty    int
 	Filled   int
 	Reserved int
+}
+
+func (j *JourneyStats) String() string {
+	return fmt.Sprintf("Empty %d\nFilled %d\nReserved %d\n", j.Empty, j.Filled, j.Reserved)
 }
