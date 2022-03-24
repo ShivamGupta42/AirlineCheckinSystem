@@ -3,6 +3,7 @@ package logger
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"os"
 )
 
 var log *zap.Logger
@@ -10,15 +11,36 @@ var log *zap.Logger
 func init() {
 	var err error
 
-	config := zap.NewProductionConfig()
+	// info level enabler
+	infoLevel := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
+		return level == zapcore.InfoLevel
+	})
 
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.TimeKey = "timestamp"
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoderConfig.StacktraceKey = ""
-	config.EncoderConfig = encoderConfig
+	// error and fatal level enabler
+	errorFatalLevel := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
+		return level == zapcore.ErrorLevel || level == zapcore.FatalLevel
+	})
 
-	log, err = config.Build(zap.AddCallerSkip(1))
+	// write syncers
+	stdoutSyncer := zapcore.Lock(os.Stdout)
+	//stderrSyncer := zapcore.Lock(os.Stderr)
+
+	// tee core
+	core := zapcore.NewTee(
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
+			stdoutSyncer,
+			infoLevel,
+		),
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
+			stdoutSyncer,
+			errorFatalLevel,
+		),
+	)
+
+	//finally, construct the logger with the tee core
+	log = zap.New(core)
 
 	if err != nil {
 		panic(err)
