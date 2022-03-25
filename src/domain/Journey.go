@@ -33,5 +33,5 @@ type JourneyStats struct {
 }
 
 func (j *JourneyStats) String() string {
-	return fmt.Sprintf("Empty %d\nFilled %d\nReserved %d\n", j.Empty, j.Filled, j.Reserved)
+	return fmt.Sprintf("Empty Seats : %d\nReserved Seats : %d\n", j.Empty, j.Reserved)
 }

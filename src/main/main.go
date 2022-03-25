@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -44,4 +45,11 @@ func main() {
 	wg.Wait()
 	fmt.Println("\nBooking Complete : " + time.Since(bookingTime).String())
 	fmt.Println(s.AllJourneyStats(1))
+
+	count, err := s.UsersDb.UsersWithSameSeat()
+	if err != nil {
+		logger.Error(err.Message)
+		panic(err)
+	}
+	fmt.Println("Seat Collisions : " + strconv.Itoa(count))
 }

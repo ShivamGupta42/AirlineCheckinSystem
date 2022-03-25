@@ -50,3 +50,31 @@ func (u *UsersDb) UpdateSeat(userId, seatId int) *errors.AppError {
 	tx.Commit()
 	return nil
 }
+
+func (u *UsersDb) UsersWithSameSeat() (int, *errors.AppError) {
+
+	Query := "select count(*) from users u1 inner join users u2 on u1.seat_id=u2.seat_id where u1.user_id!=u2.user_id"
+
+	tx, _ := u.Client.Begin()
+
+	rows, err := tx.Query(Query)
+	if err != nil {
+		logger.Error(err.Error())
+		return 0, errors.NewUnexpectedError("error while reading seat collisions")
+	}
+
+	var count int
+
+	for rows.Next() {
+		rows.Scan(&count)
+	}
+
+	if rows.Err() != nil {
+		logger.Error(rows.Err().Error())
+		return 0, errors.NewUnexpectedError("error while reading seat collisions")
+	}
+	tx.Commit()
+
+	return count, nil
+
+}
