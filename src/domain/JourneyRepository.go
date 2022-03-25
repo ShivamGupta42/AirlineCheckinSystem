@@ -47,7 +47,7 @@ func (j *JourneyRepositoryDb) AddUserJourney(planeId, seatId, userId int) (*Jour
 		return nil, errors.NewUnexpectedError("Error while getting transaction lock")
 	}
 
-	FindByID := "SELECT id, plane_id, seat_id from journey where user_id is null and seat_id=%d for share"
+	FindByID := "SELECT id, plane_id, seat_id from journey where user_id is null and seat_id=%d for update nowait"
 
 	var rows *sql.Rows
 	rows, err = tx.Query(fmt.Sprintf(FindByID, seatId))

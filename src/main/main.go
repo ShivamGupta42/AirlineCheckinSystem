@@ -21,22 +21,27 @@ func main() {
 		logger.Fatal(err.Error())
 	}()
 
-	//app wiring
+	//App wiring
 	client := app.GetDbClient()
 	s := &service.DefaultBookingService{JourneyRepo: &domain.JourneyRepositoryDb{Client: client},
 		UsersDb: &domain.UsersDb{Client: client}}
 
 	//resetting database
+	tReset := time.Now()
 	s.Reset()
-	fmt.Println("DB RESET SUCCESS")
+	fmt.Println("DB RESET SUCCESS : " + time.Since(tReset).String() + "\n\n\n")
 
 	var wg sync.WaitGroup
 	rand.Seed(time.Now().UnixNano())
-	n := 100
+	n := 10000
+
 	wg.Add(n)
+
+	bookingTime := time.Now()
 	for i := 1; i <= n; i++ {
 		go s.BookASeat(i, 1, rand.Intn(100)+1, &wg)
 	}
 	wg.Wait()
+	fmt.Println("\nBooking Complete : " + time.Since(bookingTime).String())
 	fmt.Println(s.AllJourneyStats(1))
 }
